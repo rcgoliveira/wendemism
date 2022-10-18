@@ -1,0 +1,37 @@
+
+# Rscript based on Darumbass own code, for more details consult the "phyloregion" documentation
+
+# Carregar os dados editados no excel, salvos em .csv, pode importar com o rstudio.
+# A coluna com o nome das espécies deve ter o nome 'species', e uma coluna com o nome 'longitude' e outra 'latitude' conforme o código abaixo.
+
+library (phyloregion)
+library (raster)
+library (sp)
+library (rgeos)
+
+data1 <- points2comm(dat, mask = NULL , res = 0.5, lon= "longitude", lat = "latitude", species ="Species", shp.grids = NULL)
+
+Endm <- weighted_endemism(data1$comm_dat)
+m <- merge(data1$poly_shp, data.frame(grids=names(Endm), WE=Endm), by="grids")
+m <- m[!is.na(m@data2$WE),]
+plot_swatch(m, values = m$WE, col = hcl.colors(20, palette = "Blue-Red 3", rev=FALSE))
+
+# Transformar os dados em um raster para trabalhar no editor de mapas
+
+polys <- as(m, "SpatialPolygonsDataFrame")
+polys@data[,1] <- runif(nrow(polys))
+class(polys)
+
+r <- raster(ncol=500, nrow=500) # aqui o número de colunas e o número de linhas (ncol e nrow) define o tamanho da célula
+r.polys <- rasterize(polys, r, field = polys@data[,1], fun = "mean", 
+                     update = TRUE, updateValue = "NA")
+plot(r.polys)
+
+e <- as(extent(-50, -25, -20, 7), 'SpatialPolygons') # importante colocar o tamanho da área de estudo, esses valores estão para a Caatinga
+
+r.polya2 <- crop(r.polys, e)
+
+plot(r.polya2)
+writeRaster(r.polya2, filename="result4.tif", format = 'GTiff')
+
+# Citation: Paixão, Gonçalves-Oliveira, Benko-Iseppon, umpublished.
