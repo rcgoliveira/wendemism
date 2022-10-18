@@ -1,5 +1,6 @@
 
-# Rscript based on Darumbass own code, for more details consult the "phyloregion" documentation
+# R-script based on Daru own code, for more details consult the "phyloregion" documentation (darumbass on github).
+# DARU, Barnabas H.; KARUNARATHNE, Piyal; SCHLIEP, Klaus. phyloregion: R package for biogeographical regionalization and macroecology. Methods in Ecology and Evolution, v. 11, n. 11, p. 1483-1491, 2020.
 
 # Carregar os dados editados no excel, salvos em .csv, pode importar com o rstudio.
 # A coluna com o nome das espécies deve ter o nome 'species', e uma coluna com o nome 'longitude' e outra 'latitude' conforme o código abaixo.
@@ -9,7 +10,7 @@ library (raster)
 library (sp)
 library (rgeos)
 
-data1 <- points2comm(dat, mask = NULL , res = 0.5, lon= "longitude", lat = "latitude", species ="Species", shp.grids = NULL)
+data1 <- points2comm(dat, mask = NULL , res = 0.5, lon= "longitude", lat = "latitude", species ="Species", shp.grids = NULL) # Res é a resolução em graus decimais, tamanho do grid utilizado. Não recomento alterar.
 
 Endm <- weighted_endemism(data1$comm_dat)
 m <- merge(data1$poly_shp, data.frame(grids=names(Endm), WE=Endm), by="grids")
@@ -18,20 +19,20 @@ plot_swatch(m, values = m$WE, col = hcl.colors(20, palette = "Blue-Red 3", rev=F
 
 # Transformar os dados em um raster para trabalhar no editor de mapas
 
-polys <- as(m, "SpatialPolygonsDataFrame")
-polys@data[,1] <- runif(nrow(polys))
-class(polys)
+polyg <- as(m, "SpatialPolygonsDataFrame")
+polyg@data[,1] <- runif(nrow(polyg))
+class(polyg)
 
 r <- raster(ncol=500, nrow=500) # aqui o número de colunas e o número de linhas (ncol e nrow) define o tamanho da célula
-r.polys <- rasterize(polys, r, field = polys@data[,1], fun = "mean", 
+r.polyg <- rasterize(polyg, r, field = polyg@data[,1], fun = "mean", 
                      update = TRUE, updateValue = "NA")
-plot(r.polys)
+plot(r.polyg)
 
 e <- as(extent(-50, -25, -20, 7), 'SpatialPolygons') # importante colocar o tamanho da área de estudo, esses valores estão para a Caatinga
 
-r.polya2 <- crop(r.polys, e)
+r.polyg2 <- crop(r.polyg, e)
 
-plot(r.polya2)
-writeRaster(r.polya2, filename="result4.tif", format = 'GTiff')
+plot(r.polyg2)
+writeRaster(r.polyg2, filename="result4.tif", format = 'GTiff')
 
 # Citation: Paixão, Gonçalves-Oliveira, Benko-Iseppon, umpublished.
